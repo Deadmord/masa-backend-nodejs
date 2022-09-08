@@ -1,10 +1,15 @@
-import { config, Connection, ConnectionPool } from "mssql";
-import { SqlClient } from "msnodesqlv8";
+//import { config, ConnectionPool } from "mssql";
+import { Connection, SqlClient, Error } from "msnodesqlv8";
+import { WhiteBoardType } from "../entities";
+
+interface localWhiteBoardType {
+    id: number;
+    white_board_type: string;
+}
 
 interface ISchoolService {
     getBoardTypes(): string;
 }
-
 export class SchoolService implements ISchoolService {
     public getBoardTypes(): string {
 
@@ -13,8 +18,17 @@ export class SchoolService implements ISchoolService {
         const connectionString: string = "server=.;Database=masa_school;Trusted_Connection=Yes;Driver={SQL Server Native Client 11.0}";
         const query: string = "SELECT * FROM white_board_type";
 
-        sql.open(connectionString,  (err, conn) => {
-            conn.query(query, (err, result) => {
+        sql.open(connectionString,  (connectionError: Error, connection: Connection) => {
+            connection.query(query, (queryError: Error | undefined, queryResult: localWhiteBoardType[] | undefined) => {
+                const result: WhiteBoardType[] = [];
+                if (queryResult !== undefined) {
+                    queryResult.forEach((whiteBoardType: localWhiteBoardType) => {
+                        result.push (
+                            this.parseLocalBoardTyper(whiteBoardType)
+                        );
+                    });
+                }
+                
                 console.log(result);
             })
         });
@@ -50,5 +64,12 @@ export class SchoolService implements ISchoolService {
         // });
 
         return "getBoardTypes";
+    }
+
+    private parseLocalBoardTyper(local: localWhiteBoardType): WhiteBoardType {
+        return {
+            id: local.id,
+            white_board_type: local.white_board_type,
+        }
     }
 }
