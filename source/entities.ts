@@ -1,4 +1,9 @@
-export interface WhiteBoardType {
-    id: number;
-    white_board_type: string;
+export interface whiteBoardType {
+    id: number,
+    type: string;   
+}
+
+export interface systemError {
+    code: number;
+    message: string;
 }
