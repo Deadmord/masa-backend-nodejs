@@ -1,5 +1,6 @@
 //import { config, Connection, ConnectionPool } from "mssql";
 import { Connection, SqlClient, Error } from "msnodesqlv8";
+import { whiteBoardType } from "../entities";
 
 interface localWhiteBoardType {
     id: number;
@@ -17,10 +18,31 @@ export class SchoolService implements ISchoolService {
         const query: string = "SELECT * FROM white_board_type";
 
         sql.open(connectionString,  (connectionError: Error, connection: Connection) => {
-            connection.query(query, (queryError: Error | undefined, result: localWhiteBoardType[] | undefined) => {
+            connection.query(query, (queryError: Error | undefined, queryResult: localWhiteBoardType[] | undefined) => {
+                const result: whiteBoardType[] = [];
+                if (queryResult !== undefined) {
+                    queryResult.forEach((whiteBoardType: localWhiteBoardType) => {
+                        result.push(
+                            this.parseLocalWhiteBoardType(whiteBoardType)
+                        ); 
+                    });
+                }
                 console.log(result);
-            })
+             })
         });
+
+        return "getBoardTypes";
+    }
+
+    private parseLocalWhiteBoardType(local: localWhiteBoardType): whiteBoardType {
+        return {
+            id: local.id,
+            type: local.white_board_type
+        };
+    }
+}
+
+
         // sql.open(connectionString, (err: Error, connection: Connection) => {
             // if (error) {
             //     console.error(error);
@@ -51,7 +73,3 @@ export class SchoolService implements ISchoolService {
         // }).catch((err: any) => {
         //     console.error(err);
         // });
-
-        return "getBoardTypes";
-    }
-}
