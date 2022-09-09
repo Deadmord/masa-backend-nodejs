@@ -1,44 +1,81 @@
-//import { config, Connection, ConnectionPool } from "mssql";
 import { Connection, SqlClient, Error } from "msnodesqlv8";
-import { ErrorCodes } from "../constants";
-import { systemError, whiteBoardType } from "../entities";
+import { whiteBoardType } from "../entities";
+import { ErrorCodes, General, DB_CONNECTION_STRING, Queries } from "../constants";
+import { ErrorHelper } from "../helpers/error.helper";
 
 interface localWhiteBoardType {
     id: number;
     white_board_type: string;
 }
+
 interface ISchoolService {
     getBoardTypes(): Promise<whiteBoardType[]>;
+    getBoardType(id: number): Promise<whiteBoardType>;
 }
 
 export class SchoolService implements ISchoolService {
-    
     public getBoardTypes(): Promise<whiteBoardType[]> {
         return new Promise<whiteBoardType[]>((resolve , reject) => {
             const result: whiteBoardType[] = [];
             const sql: SqlClient = require("msnodesqlv8");
     
-            const connectionString: string = "server=.;Database=masa_school;Trusted_Connection=Yes;Driver={SQL Server Native Client 11.0}";
-            const query: string = "SELECT * FROM white_board_type";
+            const connectionString: string = DB_CONNECTION_STRING;
+            const query: string = Queries.WhiteBoardTypes;
     
             sql.open(connectionString,  (connectionError: Error, connection: Connection) => {
-                if(connectionError !== null) {
-                    const error: systemError = {
-                        code: ErrorCodes.ConnectionError,
-                        message: "SQL server connection error"
-                    }
-                    reject(error);
+                //If server doesnt work
+                if(connectionError) {
+                    reject(ErrorHelper.parseError(ErrorCodes.ConnectionError, General.DbconnectionError));
                 }
                 else {
                     connection.query(query, (queryError: Error | undefined, queryResult: localWhiteBoardType[] | undefined) => {  
-                        if (queryResult !== undefined) {
-                            queryResult.forEach((whiteBoardType: localWhiteBoardType) => {
-                                result.push(
-                                    this.parseLocalWhiteBoardType(whiteBoardType)
-                                ); 
-                            });
+                        if (queryError) {
+                            reject(ErrorHelper.parseError(ErrorCodes.queryError, General.SqlQueryError));
                         }
-                        resolve(result);
+                        else {
+                            const result: whiteBoardType[] = [];
+                            if (queryResult !== undefined) {
+                                queryResult.forEach(whiteBoardType => {
+                                    result.push(
+                                        this.parseLocalWhiteBoardType(whiteBoardType)
+                                    )
+                                });
+                            }
+                            resolve(result);
+                        }
+                    })
+                }
+            });
+        });
+    }
+
+    public getBoardType(id: number): Promise<whiteBoardType> {
+        let result: whiteBoardType;
+        return new Promise<whiteBoardType>((resolve, reject) => {
+
+            const sql: SqlClient = require("msnodesqlv8");
+
+            const connectionString: string = DB_CONNECTION_STRING;
+            const query: string = Queries.WhiteBoardTypeById;
+
+            sql.open(connectionString, (connectionError: Error, connection: Connection) => {
+                if (connectionError) {
+                    reject(ErrorHelper.parseError(ErrorCodes.ConnectionError, General.DbconnectionError));
+                }
+                else {
+                    connection.query(`${query} ${id}`, (queryError: Error | undefined, queryResult: localWhiteBoardType[] | undefined) => {
+                        if (queryError) {
+                            reject(ErrorHelper.parseError(ErrorCodes.queryError, General.SqlQueryError));
+                        }
+                        else {
+                            if (queryResult !== undefined && queryResult.length === 1) {
+                                result = this.parseLocalWhiteBoardType(queryResult[0])
+                            }
+                            else if (queryResult !== undefined && queryResult.length === 0) {
+                                //TO DO: Not Found 
+                            }
+                            resolve(result);
+                        }
                     })
                 }
             });
