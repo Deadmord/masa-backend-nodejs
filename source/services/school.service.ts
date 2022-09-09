@@ -1,20 +1,23 @@
-import { config, Connection, ConnectionPool } from "mssql";
-import { SqlClient } from "msnodesqlv8";
+//import { config, Connection, ConnectionPool } from "mssql";
+import { Connection, SqlClient, Error } from "msnodesqlv8";
 
+interface localWhiteBoardType {
+    id: number;
+    white_board_type: string;
+}
 interface ISchoolService {
     getBoardTypes(): string;
 }
 
 export class SchoolService implements ISchoolService {
     public getBoardTypes(): string {
-
         const sql: SqlClient = require("msnodesqlv8");
 
         const connectionString: string = "server=.;Database=masa_school;Trusted_Connection=Yes;Driver={SQL Server Native Client 11.0}";
         const query: string = "SELECT * FROM white_board_type";
 
-        sql.open(connectionString,  (err, conn) => {
-            conn.query(query, (err, result) => {
+        sql.open(connectionString,  (connectionError: Error, connection: Connection) => {
+            connection.query(query, (queryError: Error | undefined, result: localWhiteBoardType[] | undefined) => {
                 console.log(result);
             })
         });
