@@ -1,6 +1,7 @@
 //import { config, Connection, ConnectionPool } from "mssql";
 import { Connection, SqlClient, Error } from "msnodesqlv8";
-import { whiteBoardType } from "../entities";
+import { ErrorCodes } from "../constants";
+import { systemError, whiteBoardType } from "../entities";
 
 interface localWhiteBoardType {
     id: number;
@@ -21,16 +22,25 @@ export class SchoolService implements ISchoolService {
             const query: string = "SELECT * FROM white_board_type";
     
             sql.open(connectionString,  (connectionError: Error, connection: Connection) => {
-                connection.query(query, (queryError: Error | undefined, queryResult: localWhiteBoardType[] | undefined) => {  
-                    if (queryResult !== undefined) {
-                        queryResult.forEach((whiteBoardType: localWhiteBoardType) => {
-                            result.push(
-                                this.parseLocalWhiteBoardType(whiteBoardType)
-                            ); 
-                        });
+                if(connectionError !== null) {
+                    const error: systemError = {
+                        code: ErrorCodes.ConnectionError,
+                        message: "SQL server connection error"
                     }
-                    resolve(result);
-                 })
+                    reject(error);
+                }
+                else {
+                    connection.query(query, (queryError: Error | undefined, queryResult: localWhiteBoardType[] | undefined) => {  
+                        if (queryResult !== undefined) {
+                            queryResult.forEach((whiteBoardType: localWhiteBoardType) => {
+                                result.push(
+                                    this.parseLocalWhiteBoardType(whiteBoardType)
+                                ); 
+                            });
+                        }
+                        resolve(result);
+                    })
+                }
             });
         });
     }
