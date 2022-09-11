@@ -3,6 +3,10 @@ export class ErrorCodes {
     public static queryError: number = 101;
 }
 
+export class ErrorMessage {
+    public static DbconnectionError: string = "DB server connection error";
+    public static SqlQueryError: string = "Incorrect query";
+}
 export class General {
     public static DbconnectionError: string = "DB server connection error";
     public static SqlQueryError: string = "Incorrect query";
