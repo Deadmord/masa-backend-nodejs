@@ -8,7 +8,7 @@ export interface systemError {
     message: string;
 }
 
-export interface sqlParametr {
+export interface sqlParameter {
     name: string;
     type: any;
     value: string | number;
